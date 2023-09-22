@@ -1,0 +1,120 @@
+---
+title: "BiocAlphaMissense: Bioconductor interfaces to AlphaMissense pathogenicity findings"
+author: "Vincent J. Carey, stvjc at channing.harvard.edu"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{BiocAlphaMissense: Bioconductor interfaces to AlphaMissense pathogenicity findings}
+  %\VignetteEncoding{UTF-8}
+output:
+  BiocStyle::html_document:
+    highlight: pygments
+    number_sections: yes
+    theme: united
+    toc: yes
+---
+
+# Introduction
+
+AlphaMissense ([Science 2023](https://www.science.org/doi/epdf/10.1126/science.adg7492))
+is a machine learning procedure for inferring pathogenicity of single nucleotide
+substitutions in the human proteome.  Text files are distributed by
+the authors, and these have been tabix-indexed for use in this
+package.  Note that the pathogenicity data are produced under a
+license that forbids commercial use.
+
+The package described here can currently be installed using
+```
+BiocManager::install("vjcitn/BiocAlphaMissense")
+```
+
+# A quick look at single-nucleotide data
+
+The following code draws the first 10 records and
+places them in a data.frame.  Note that 600 MB of
+bgzipped text and a tabix index will be retrieved
+and cached on first attempt.
+
+```{r lk1, message=FALSE}
+library(BiocAlphaMissense)
+library(Rsamtools)
+amis_txf = get_alphamis_txf(build="hg38")
+amis_txf
+yieldSize(amis_txf) = 10L
+df10 = read.delim(text=scanTabix(amis_txf)[[1]], h=FALSE)
+data(amnames)
+names(df10) = amnames
+df10
+```
+
+# Checking against GWAS hits: asthma example
+
+We used the EBI GWAS catalog and searched for "sthma"
+in the `MAPPED_TRAIT` field.  The resulting
+records are in a GRanges instance, accessible via `data(amentgr)`.
+
+```{r lkda}
+data(amentgr)
+length(amentgr)
+amentgr[1:3,c("STRONGEST.SNP.RISK.ALLELE", "PUBMEDID")]
+```
+
+The coincidence of these GWAS hits with AlphaMissense
+results (`amis_txf` created above) can be computed quickly,.
+
+```{r doint, message=FALSE}
+library(Rsamtools)
+library(GenomeInfoDb)
+seqlevels(amentgr) = paste0("chr", seqlevels(amentgr)) # if off line
+yieldSize(amis_txf) = NA_integer_
+lk = scanTabix(amis_txf, param=amentgr)
+```
+
+Some of the positions with GWAS hits don't correspond to
+results from AlphaMissense.  These positions are
+empty components of the list returned by scanTabx.
+They are removed and the scanTabix results are converted
+to a data.frame.
+```{r doconv}
+ok = which(vapply(lk, function(x)length(x)>0, logical(1)))
+cc = c("character", "character", "character", "character", "character", 
+"character", "character", "character", "numeric", "character")
+intsect = lapply(lk[ok], 
+   function(x) read.delim(text=x, h=FALSE, colClasses=cc))
+intsect_df = do.call(rbind, intsect)
+data(amnames)
+names(intsect_df) = amnames
+head(intsect_df,3)
+```
+
+At this point, `intsect_df` is the collection of _all_
+substitution scores at asthma GWAS hits.
+We focus on the substitutions reported as risk alleles.
+
+```{r lkrisk}
+amentgr$RISK_ALLELE = gsub("(.*-)", "", amentgr$STRONGEST.SNP.RISK.ALLELE)
+```
+
+To join the missense classes with the coincident GWAS hits
+we build a "key" for each table and then join.
+
+```{r dokey}
+intsect_df$key = with(intsect_df, paste(CHROM, POS, ALT, sep=":"))
+ament_df = as.data.frame(amentgr)
+ament_df$key = with(ament_df, paste(seqnames, CHR_POS, RISK_ALLELE, sep=":"))
+ia = dplyr::inner_join(intsect_df, ament_df, by="key", relationship = "many-to-many")
+iau = ia[!duplicated(ia$key),]
+table(iau$am_class)
+```
+
+Some of the information about the likely pathogenic substitutions
+that have been identified as hits for asthma
+is collected here:
+
+```{r lktab}
+iau |> 
+  dplyr::filter(am_class == "likely_pathogenic") |> 
+  dplyr::select(CHR_ID, CHR_POS, STRONGEST.SNP.RISK.ALLELE, 
+  OR.or.BETA, MAPPED_TRAIT, MAPPED_GENE, am_class)
+```
+
