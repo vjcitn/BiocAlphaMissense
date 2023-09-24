@@ -1,7 +1,7 @@
 Package: BiocAlphaMissense
 Date: 2022-10-01
 Title: BiocAlphaMis: interfaces for AlphaMissense
-Version: 0.0.0
+Version: 0.0.1
 Authors@R: 
     c(person(
         "Vincent", "Carey", role = c("aut", "cre"),
@@ -17,7 +17,7 @@ Description: BiocAlphaMissense defines some elementary interfaces
 License: Artistic-2.0
 Encoding: UTF-8
 Depends: R (>= 4.1)
-Suggests: knitr, testthat, BiocStyle, dplyr
+Suggests: knitr, testthat, BiocStyle, dplyr, EnsDb.Hsapiens.v79
 Imports: GenomicRanges, Rsamtools, BiocFileCache
 VignetteBuilder: knitr
 biocViews: Infrastructure

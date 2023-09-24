@@ -12,3 +12,19 @@
 #' @docType data
 #' @format character vector
 "amnames"
+
+#' a data.frame of gene-level mean AlphaMissense pathogenicity scores computed for hg19
+#' @docType data
+#' @format data.frame
+#' @examples
+#' data(am_genemns_hg19)
+#' head(am_genemns_hg19)
+"am_genemns_hg19"
+
+#' a data.frame of gene-level mean AlphaMissense pathogenicity scores computed for hg38
+#' @docType data
+#' @format data.frame
+#' @examples
+#' data(am_genemns_hg38)
+#' head(am_genemns_hg38)
+"am_genemns_hg38"

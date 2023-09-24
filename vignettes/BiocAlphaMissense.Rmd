@@ -28,6 +28,79 @@ The package described here can currently be installed using
 BiocManager::install("vjcitn/BiocAlphaMissense")
 ```
 
+# Gene level summaries; binding to EnsDb annotations
+
+## Production of annotated gene level summaries
+
+We retrieved the gene level summary data on 24 Sept 2023,
+e.g., [the hg38 file](https://storage.googleapis.com/dm_alphamissense/AlphaMissense_gene_hg38.tsv.gz).  This was transformed to a data.frame instance and lodged in
+the package for use via `data(am_genemns_hg38)`.  The annotation
+used at the source is GENCODE.  An additional column, `tx_id`,
+is added, which removes the GENCODE version qualifiers (.n[n]$).
+This simplifies merging with EnsDb gene and transcript annotation.
+
+Let's bind the average pathogenicity
+scores to our transcript annotation.
+
+```{r doens1}
+library(BiocAlphaMissense)
+library(EnsDb.Hsapiens.v79)
+tx38 = transcripts(EnsDb.Hsapiens.v79)
+tx38df = as.data.frame(tx38)
+data(am_genemns_hg38)
+tx38df = merge(tx38df, am_genemns_hg38, by="tx_id")
+```
+
+Note that there are `r nrow(am_genemns_hg38)` scores
+available in the gene-level summary.
+
+## Pathogenicity across annotated biotypes
+
+As a simple sanity check, we
+check distributions of pathogenicity scores across transcript biotype.
+
+```{r aaa}
+par(las=2, mar=c(18,5,2,4))
+boxplot(split(tx38df$mean_am_pathogenicity, tx38df$tx_biotype))
+```
+
+## What are the gene level averages?
+
+In this section we pick a gene and look at the landscape
+of pathogenicity scores to see what the averaging
+process is doing.
+
+First, get gene address for ORDML3.
+
+```{r getor}
+gg = genes(EnsDb.Hsapiens.v79)
+gdf = as(gg, "data.frame")
+tx38df2= merge(tx38df, gdf[,c("gene_id", "symbol")], by="gene_id")
+myp = gg[gg$symbol=="ORMDL3"]
+```
+
+Now get the SNV-level data in this region.
+
+```{r usesnv}
+amis_txf = get_alphamis_txf(build="hg38")
+library(Rsamtools)
+seqlevelsStyle(myp) = "UCSC"
+sc = read.delim(text=scanTabix(amis_txf, param=myp)[[1]], h=FALSE)
+```
+
+Plot the scores against the genomic coordinate.
+```{r lkpl}
+plot(sc$V2, sc$V9)
+```
+
+Check the average score from the SVN-level data against the reported mean.
+
+```{r ckav}
+mean(sc$V9)  # SNV
+tx38df2[tx38df2$symbol=="ORMDL3",] # reported mean pathogenicity
+```
+
+
 # A quick look at single-nucleotide data
 
 The following code draws the first 10 records and
