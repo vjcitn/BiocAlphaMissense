@@ -81,7 +81,7 @@ myp = gg[gg$symbol=="ORMDL3"]
 
 Now get the SNV-level data in this region.
 
-```{r usesnv}
+```{r usesnv, message=FALSE}
 amis_txf = get_alphamis_txf(build="hg38")
 library(Rsamtools)
 seqlevelsStyle(myp) = "UCSC"
@@ -90,7 +90,7 @@ sc = read.delim(text=scanTabix(amis_txf, param=myp)[[1]], h=FALSE)
 
 Plot the scores against the genomic coordinate.
 ```{r lkpl}
-plot(sc$V2, sc$V9)
+plot(sc$V2, sc$V9,xlab="bp chr17", ylab="substitution-specific pathogenicity")
 ```
 
 Check the average score from the SVN-level data against the reported mean.
