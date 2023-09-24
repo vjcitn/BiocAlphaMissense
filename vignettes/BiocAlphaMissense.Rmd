@@ -42,7 +42,7 @@ This simplifies merging with EnsDb gene and transcript annotation.
 Let's bind the average pathogenicity
 scores to our transcript annotation.
 
-```{r doens1}
+```{r doens1, message=FALSE}
 library(BiocAlphaMissense)
 library(EnsDb.Hsapiens.v79)
 tx38 = transcripts(EnsDb.Hsapiens.v79)
