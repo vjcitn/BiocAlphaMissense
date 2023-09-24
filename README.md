@@ -2,8 +2,17 @@
 
 This package provides elementary interfaces to AlphaMissense resources, using BiocFileCache, Rsamtools, and GenomicRanges.
 
-The vignette demonstrates how a collection of several thousand records
-on GWAS hits for asthma can be filtered to SNVs that are "likely pathogenic":
+Installation at this time:
+
+```
+BiocManager::install("vjcitn/BiocAlphaMissense")
+```
+
+The vignette reviews how to use the gene-level summaries of pathogenicity
+of nucleotide substitutions.
+
+The vignette also demonstrates how a collection of 
+GWAS hits for asthma can be filtered to SNVs that are "likely pathogenic":
 
 ```
 ##   CHR_ID   CHR_POS STRONGEST.SNP.RISK.ALLELE OR.or.BETA MAPPED_TRAIT
