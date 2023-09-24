@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">BiocAlphaMissense</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.1</span>
       </span>
     </div>
 
@@ -69,7 +69,7 @@
       <h1 data-toc-skip>BiocAlphaMissense: Bioconductor interfaces to AlphaMissense pathogenicity findings</h1>
                         <h4 data-toc-skip class="author">Vincent J. Carey, stvjc at channing.harvard.edu</h4>
             
-            <h4 data-toc-skip class="date">September 22, 2023</h4>
+            <h4 data-toc-skip class="date">September 24, 2023</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/vjcitn/BiocAlphaMissense/blob/HEAD/vignettes/BiocAlphaMissense.Rmd"><code>vignettes/BiocAlphaMissense.Rmd</code></a></small>
       <div class="hidden name"><code>BiocAlphaMissense.Rmd</code></div>
@@ -86,10 +86,73 @@
 <pre><code><span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"vjcitn/BiocAlphaMissense"</span><span class="op">)</span></span></code></pre>
 </div>
 <div class="section level2">
+<h2 id="gene-level-summaries-binding-to-ensdb-annotations">Gene level summaries; binding to EnsDb annotations<a class="anchor" aria-label="anchor" href="#gene-level-summaries-binding-to-ensdb-annotations"></a>
+</h2>
+<div class="section level3">
+<h3 id="production-of-annotated-gene-level-summaries">Production of annotated gene level summaries<a class="anchor" aria-label="anchor" href="#production-of-annotated-gene-level-summaries"></a>
+</h3>
+<p>We retrieved the gene level summary data on 24 Sept 2023, e.g., <a href="https://storage.googleapis.com/dm_alphamissense/AlphaMissense_gene_hg38.tsv.gz" class="external-link">the hg38 file</a>. This was transformed to a data.frame instance and lodged in the package for use via <code>data(am_genemns_hg38)</code>. The annotation used at the source is GENCODE. An additional column, <code>tx_id</code>, is added, which removes the GENCODE version qualifiers (.n[n]$). This simplifies merging with EnsDb gene and transcript annotation.</p>
+<p>Let’s bind the average pathogenicity scores to our transcript annotation.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/vjcitn/BiocAlphaMissense">BiocAlphaMissense</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">EnsDb.Hsapiens.v79</span><span class="op">)</span></span>
+<span><span class="va">tx38</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/GenomicFeatures/man/transcripts.html" class="external-link">transcripts</a></span><span class="op">(</span><span class="va">EnsDb.Hsapiens.v79</span><span class="op">)</span></span>
+<span><span class="va">tx38df</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">tx38</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">am_genemns_hg38</span><span class="op">)</span></span>
+<span><span class="va">tx38df</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">tx38df</span>, <span class="va">am_genemns_hg38</span>, by<span class="op">=</span><span class="st">"tx_id"</span><span class="op">)</span></span></code></pre></div>
+<p>Note that there are 19233 scores available in the gene-level summary.</p>
+</div>
+<div class="section level3">
+<h3 id="pathogenicity-across-annotated-biotypes">Pathogenicity across annotated biotypes<a class="anchor" aria-label="anchor" href="#pathogenicity-across-annotated-biotypes"></a>
+</h3>
+<p>As a simple sanity check, we check distributions of pathogenicity scores across transcript biotype.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>las<span class="op">=</span><span class="fl">2</span>, mar<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">18</span>,<span class="fl">5</span>,<span class="fl">2</span>,<span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/boxplot.html" class="external-link">boxplot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="va">tx38df</span><span class="op">$</span><span class="va">mean_am_pathogenicity</span>, <span class="va">tx38df</span><span class="op">$</span><span class="va">tx_biotype</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="BiocAlphaMissense_files/figure-html/aaa-1.png" width="700"></p>
+</div>
+<div class="section level3">
+<h3 id="what-are-the-gene-level-averages">What are the gene level averages?<a class="anchor" aria-label="anchor" href="#what-are-the-gene-level-averages"></a>
+</h3>
+<p>In this section we pick a gene and look at the landscape of pathogenicity scores to see what the averaging process is doing.</p>
+<p>First, get gene address for ORDML3.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">gg</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/GenomicFeatures/man/transcripts.html" class="external-link">genes</a></span><span class="op">(</span><span class="va">EnsDb.Hsapiens.v79</span><span class="op">)</span></span>
+<span><span class="va">gdf</span> <span class="op">=</span> <span class="fu">as</span><span class="op">(</span><span class="va">gg</span>, <span class="st">"data.frame"</span><span class="op">)</span></span>
+<span><span class="va">tx38df2</span><span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">tx38df</span>, <span class="va">gdf</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gene_id"</span>, <span class="st">"symbol"</span><span class="op">)</span><span class="op">]</span>, by<span class="op">=</span><span class="st">"gene_id"</span><span class="op">)</span></span>
+<span><span class="va">myp</span> <span class="op">=</span> <span class="va">gg</span><span class="op">[</span><span class="va">gg</span><span class="op">$</span><span class="va">symbol</span><span class="op">==</span><span class="st">"ORMDL3"</span><span class="op">]</span></span></code></pre></div>
+<p>Now get the SNV-level data in this region.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">amis_txf</span> <span class="op">=</span> <span class="fu"><a href="../reference/get_alphamis_txf.html">get_alphamis_txf</a></span><span class="op">(</span>build<span class="op">=</span><span class="st">"hg38"</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/Rsamtools" class="external-link">Rsamtools</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/GenomeInfoDb/man/seqlevelsStyle.html" class="external-link">seqlevelsStyle</a></span><span class="op">(</span><span class="va">myp</span><span class="op">)</span> <span class="op">=</span> <span class="st">"UCSC"</span></span></code></pre></div>
+<pre><code><span><span class="co">## Warning in (function (seqlevels, genome, new_style) : cannot switch some</span></span>
+<span><span class="co">## GRCh38's seqlevels from NCBI to UCSC style</span></span></code></pre>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sc</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span>text<span class="op">=</span><span class="fu"><a href="https://rdrr.io/pkg/Rsamtools/man/scanTabix.html" class="external-link">scanTabix</a></span><span class="op">(</span><span class="va">amis_txf</span>, param<span class="op">=</span><span class="va">myp</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, h<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p>Plot the scores against the genomic coordinate.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sc</span><span class="op">$</span><span class="va">V2</span>, <span class="va">sc</span><span class="op">$</span><span class="va">V9</span>,xlab<span class="op">=</span><span class="st">"bp chr17"</span>, ylab<span class="op">=</span><span class="st">"substitution-specific pathogenicity"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="BiocAlphaMissense_files/figure-html/lkpl-1.png" width="700"></p>
+<p>Check the average score from the SVN-level data against the reported mean.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">sc</span><span class="op">$</span><span class="va">V9</span><span class="op">)</span>  <span class="co"># SNV</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] 0.6466165</span></span></code></pre>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tx38df2</span><span class="op">[</span><span class="va">tx38df2</span><span class="op">$</span><span class="va">symbol</span><span class="op">==</span><span class="st">"ORMDL3"</span>,<span class="op">]</span> <span class="co"># reported mean pathogenicity</span></span></code></pre></div>
+<pre><code><span><span class="co">##               gene_id           tx_id seqnames    start      end width strand</span></span>
+<span><span class="co">## 12511 ENSG00000172057 ENST00000394169       17 39922277 39926841  4565      -</span></span>
+<span><span class="co">##           tx_biotype tx_cds_seq_start tx_cds_seq_end         tx_name</span></span>
+<span><span class="co">## 12511 protein_coding         39922550       39924203 ENST00000394169</span></span>
+<span><span class="co">##           transcript_id mean_am_pathogenicity symbol</span></span>
+<span><span class="co">## 12511 ENST00000394169.5             0.6466168 ORMDL3</span></span></code></pre>
+</div>
+</div>
+<div class="section level2">
 <h2 id="a-quick-look-at-single-nucleotide-data">A quick look at single-nucleotide data<a class="anchor" aria-label="anchor" href="#a-quick-look-at-single-nucleotide-data"></a>
 </h2>
 <p>The following code draws the first 10 records and places them in a data.frame. Note that 600 MB of bgzipped text and a tabix index will be retrieved and cached on first attempt.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/vjcitn/BiocAlphaMissense">BiocAlphaMissense</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/Rsamtools" class="external-link">Rsamtools</a></span><span class="op">)</span></span>
 <span><span class="va">amis_txf</span> <span class="op">=</span> <span class="fu"><a href="../reference/get_alphamis_txf.html">get_alphamis_txf</a></span><span class="op">(</span>build<span class="op">=</span><span class="st">"hg38"</span><span class="op">)</span></span>
@@ -99,7 +162,7 @@
 <span><span class="co">## index: /home/vincent/.cache/R/Bioc.../a86b74da37cb_AlphaMissense_hg38.tsv.gz.tbi</span></span>
 <span><span class="co">## isOpen: FALSE </span></span>
 <span><span class="co">## yieldSize: NA</span></span></code></pre>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Rsamtools/man/RsamtoolsFile-class.html" class="external-link">yieldSize</a></span><span class="op">(</span><span class="va">amis_txf</span><span class="op">)</span> <span class="op">=</span> <span class="fl">10L</span></span>
 <span><span class="va">df10</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span>text<span class="op">=</span><span class="fu"><a href="https://rdrr.io/pkg/Rsamtools/man/scanTabix.html" class="external-link">scanTabix</a></span><span class="op">(</span><span class="va">amis_txf</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, h<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">amnames</span><span class="op">)</span></span>
@@ -132,11 +195,11 @@
 <h2 id="checking-against-gwas-hits-asthma-example">Checking against GWAS hits: asthma example<a class="anchor" aria-label="anchor" href="#checking-against-gwas-hits-asthma-example"></a>
 </h2>
 <p>We used the EBI GWAS catalog and searched for “sthma” in the <code>MAPPED_TRAIT</code> field. The resulting records are in a GRanges instance, accessible via <code>data(amentgr)</code>.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">amentgr</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">amentgr</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 3488</span></span></code></pre>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">amentgr</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"STRONGEST.SNP.RISK.ALLELE"</span>, <span class="st">"PUBMEDID"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">## GRanges object with 3 ranges and 2 metadata columns:</span></span>
 <span><span class="co">##       seqnames    ranges strand | STRONGEST.SNP.RISK.ALLELE  PUBMEDID</span></span>
@@ -147,14 +210,14 @@
 <span><span class="co">##   -------</span></span>
 <span><span class="co">##   seqinfo: 23 sequences from GRCh38 genome; no seqlengths</span></span></code></pre>
 <p>The coincidence of these GWAS hits with AlphaMissense results (<code>amis_txf</code> created above) can be computed quickly,.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/Rsamtools" class="external-link">Rsamtools</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/GenomeInfoDb" class="external-link">GenomeInfoDb</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/GenomeInfoDb/man/seqinfo.html" class="external-link">seqlevels</a></span><span class="op">(</span><span class="va">amentgr</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"chr"</span>, <span class="fu"><a href="https://rdrr.io/pkg/GenomeInfoDb/man/seqinfo.html" class="external-link">seqlevels</a></span><span class="op">(</span><span class="va">amentgr</span><span class="op">)</span><span class="op">)</span> <span class="co"># if off line</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/Rsamtools/man/RsamtoolsFile-class.html" class="external-link">yieldSize</a></span><span class="op">(</span><span class="va">amis_txf</span><span class="op">)</span> <span class="op">=</span> <span class="cn">NA_integer_</span></span>
 <span><span class="va">lk</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/Rsamtools/man/scanTabix.html" class="external-link">scanTabix</a></span><span class="op">(</span><span class="va">amis_txf</span>, param<span class="op">=</span><span class="va">amentgr</span><span class="op">)</span></span></code></pre></div>
 <p>Some of the positions with GWAS hits don’t correspond to results from AlphaMissense. These positions are empty components of the list returned by scanTabx. They are removed and the scanTabix results are converted to a data.frame.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ok</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">lk</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">&gt;</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">cc</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"character"</span>, <span class="st">"character"</span>, <span class="st">"character"</span>, <span class="st">"character"</span>, <span class="st">"character"</span>, </span>
 <span><span class="st">"character"</span>, <span class="st">"character"</span>, <span class="st">"character"</span>, <span class="st">"numeric"</span>, <span class="st">"character"</span><span class="op">)</span></span>
@@ -177,10 +240,10 @@
 <span><span class="co">## chr4:38798089-38798089.2 likely_benign</span></span>
 <span><span class="co">## chr4:38798089-38798089.3 likely_benign</span></span></code></pre>
 <p>At this point, <code>intsect_df</code> is the collection of <em>all</em> substitution scores at asthma GWAS hits. We focus on the substitutions reported as risk alleles.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">amentgr</span><span class="op">$</span><span class="va">RISK_ALLELE</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span><span class="st">"(.*-)"</span>, <span class="st">""</span>, <span class="va">amentgr</span><span class="op">$</span><span class="va">STRONGEST.SNP.RISK.ALLELE</span><span class="op">)</span></span></code></pre></div>
 <p>To join the missense classes with the coincident GWAS hits we build a “key” for each table and then join.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">intsect_df</span><span class="op">$</span><span class="va">key</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span><span class="va">intsect_df</span>, <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">CHROM</span>, <span class="va">POS</span>, <span class="va">ALT</span>, sep<span class="op">=</span><span class="st">":"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">ament_df</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">amentgr</span><span class="op">)</span></span>
 <span><span class="va">ament_df</span><span class="op">$</span><span class="va">key</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span><span class="va">ament_df</span>, <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">seqnames</span>, <span class="va">CHR_POS</span>, <span class="va">RISK_ALLELE</span>, sep<span class="op">=</span><span class="st">":"</span><span class="op">)</span><span class="op">)</span></span>
@@ -191,7 +254,7 @@
 <span><span class="co">##         ambiguous     likely_benign likely_pathogenic </span></span>
 <span><span class="co">##                 1                15                 3</span></span></code></pre>
 <p>Some of the information about the likely pathogenic substitutions that have been identified as hits for asthma is collected here:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iau</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">am_class</span> <span class="op">==</span> <span class="st">"likely_pathogenic"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">CHR_ID</span>, <span class="va">CHR_POS</span>, <span class="va">STRONGEST.SNP.RISK.ALLELE</span>, </span>
