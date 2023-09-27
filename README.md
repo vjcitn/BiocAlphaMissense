@@ -1,5 +1,7 @@
 # BiocAlphaMissense
 
+This repo was an early proof of concept, a [more mature approach](https://mtmorgan.github.io/AlphaMissense/index.html) is available from Martin Morgan.
+
 This package provides elementary interfaces to AlphaMissense resources, using BiocFileCache, Rsamtools, and GenomicRanges.
 
 Installation at this time:
